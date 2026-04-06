@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vi-Sakha MVP Chat</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+      .chat-box { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; min-height: 300px; margin-bottom: 1rem; overflow-y: auto; }
+      .message { margin: 0.5rem 0; }
+      .user { color: #111; }
+      .bot { color: #2b5; }
+      .meta { color: #666; font-size: 0.85rem; }
+      form { display: flex; gap: 0.5rem; }
+      input { flex: 1; padding: 0.6rem; }
+      button { padding: 0.6rem 1rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Vi-Sakha (MVP)</h1>
+    <p>Priority: <b>Golden DB</b> → <b>RAG DB</b> → <b>Mock AI</b></p>
+    <div class="chat-box" id="chatBox"></div>
+
+    <form id="chatForm">
+      <input id="questionInput" type="text" placeholder="Ask your question..." required />
+      <button type="submit">Send</button>
+    </form>
+
+    <script>
+      const form = document.getElementById('chatForm');
+      const input = document.getElementById('questionInput');
+      const chatBox = document.getElementById('chatBox');
+
+      function appendMessage({ speaker, text, meta }) {
+        const div = document.createElement('div');
+        div.className = 'message';
+        const line = document.createElement('div');
+        line.className = speaker === 'You' ? 'user' : 'bot';
+        const bold = document.createElement('b');
+        bold.textContent = `${speaker}:`;
+        line.appendChild(bold);
+        line.appendChild(document.createTextNode(` ${text}`));
+        div.appendChild(line);
+        if (meta) {
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'meta';
+          metaDiv.textContent = meta;
+          div.appendChild(metaDiv);
+        }
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const question = input.value.trim();
+        if (!question) return;
+
+        appendMessage({ speaker: 'You', text: question });
+        input.value = '';
+
+        try {
+          const response = await fetch('/api/chat/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            appendMessage({ speaker: 'Bot', text: `Error: ${data.error || 'request failed'}` });
+            return;
+          }
+
+          appendMessage({
+            speaker: 'Bot',
+            text: data.answer,
+            meta: `source: ${data.source}${data.matchedQuestion ? ` | matched: ${data.matchedQuestion}` : ''}`,
+          });
+        } catch (_error) {
+          appendMessage({ speaker: 'Bot', text: 'Network error' });
+        }
+      });
+    </script>
+  </body>
+</html>
