@@ -30,15 +30,15 @@ function overlapScore(question, candidateQuestion) {
 async function findBestRagMatch(db, question, threshold = 0.3) {
   const docs = await db.collection('rag_knowledge').find({}).toArray();
 
-  let best = null;
+  let best = { doc: null, score: -1 };
   for (const doc of docs) {
     const score = overlapScore(question, doc.question || '');
-    if (!best || score > best.score) {
+    if (score > best.score) {
       best = { doc, score };
     }
   }
 
-  if (!best || best.score < threshold) {
+  if (!best.doc || best.score < threshold) {
     return null;
   }
 
