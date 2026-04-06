@@ -25,6 +25,7 @@ MongoDB is used as the storage layer for Golden DB, RAG DB, and conversation his
    cp .env.example .env
    ```
 3. Set `MONGODB_URI` and optional `MONGODB_DB_NAME` in `.env`.
+4. Set `ADMIN_API_KEY` in `.env` to protect admin insert APIs.
 
 ## Run
 ```bash
@@ -55,6 +56,7 @@ Response includes:
 }
 ```
 - `type`: `golden` or `rag`
+- Required header: `x-admin-api-key: <ADMIN_API_KEY>`
 
 ## Data Collections
 - `golden_answers`

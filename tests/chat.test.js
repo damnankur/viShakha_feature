@@ -72,3 +72,25 @@ describe('chat prioritization', () => {
     expect(response.body.answer).toContain('Mock AI response');
   });
 });
+
+describe('admin knowledge auth', () => {
+  beforeEach(() => {
+    process.env.ADMIN_API_KEY = 'test-admin-key';
+    mongo.setDbForTests(createMockDb());
+  });
+
+  afterEach(() => {
+    delete process.env.ADMIN_API_KEY;
+    mongo.setDbForTests(undefined);
+  });
+
+  test('rejects unauthorized admin insert', async () => {
+    const response = await request(app).post('/api/chat/admin/knowledge').send({
+      type: 'golden',
+      question: 'Q?',
+      answer: 'A',
+    });
+
+    expect(response.status).toBe(401);
+  });
+});

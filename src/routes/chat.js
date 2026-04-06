@@ -13,6 +13,18 @@ const chatLimiter = rateLimit({
 
 router.use(chatLimiter);
 
+function requireAdminKey(req, res, next) {
+  const configuredKey = process.env.ADMIN_API_KEY;
+  if (!configuredKey) {
+    return res.status(503).json({ error: 'admin endpoint is not configured' });
+  }
+  const headerKey = req.header('x-admin-api-key');
+  if (!headerKey || headerKey !== configuredKey) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+  return next();
+}
+
 router.post('/ask', async (req, res, next) => {
   try {
     const question = (req.body?.question || '').trim();
@@ -37,7 +49,7 @@ router.post('/ask', async (req, res, next) => {
   }
 });
 
-router.post('/admin/knowledge', async (req, res, next) => {
+router.post('/admin/knowledge', requireAdminKey, async (req, res, next) => {
   try {
     const { type, question, answer } = req.body || {};
     if (!['golden', 'rag'].includes(type)) {
