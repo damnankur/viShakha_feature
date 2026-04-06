@@ -1,8 +1,17 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { getPrioritizedAnswer, normalizeText } = require('../services/retrievalService');
 const { connectToMongo } = require('../db/mongo');
 
 const router = express.Router();
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(chatLimiter);
 
 router.post('/ask', async (req, res, next) => {
   try {

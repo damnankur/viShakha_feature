@@ -31,10 +31,22 @@
       const input = document.getElementById('questionInput');
       const chatBox = document.getElementById('chatBox');
 
-      function appendMessage(html) {
+      function appendMessage({ speaker, text, meta }) {
         const div = document.createElement('div');
         div.className = 'message';
-        div.innerHTML = html;
+        const line = document.createElement('div');
+        line.className = speaker === 'You' ? 'user' : 'bot';
+        const bold = document.createElement('b');
+        bold.textContent = `${speaker}:`;
+        line.appendChild(bold);
+        line.appendChild(document.createTextNode(` ${text}`));
+        div.appendChild(line);
+        if (meta) {
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'meta';
+          metaDiv.textContent = meta;
+          div.appendChild(metaDiv);
+        }
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
       }
@@ -44,7 +56,7 @@
         const question = input.value.trim();
         if (!question) return;
 
-        appendMessage(`<div class="user"><b>You:</b> ${question}</div>`);
+        appendMessage({ speaker: 'You', text: question });
         input.value = '';
 
         try {
@@ -56,15 +68,17 @@
 
           const data = await response.json();
           if (!response.ok) {
-            appendMessage(`<div class="bot"><b>Bot:</b> Error: ${data.error || 'request failed'}</div>`);
+            appendMessage({ speaker: 'Bot', text: `Error: ${data.error || 'request failed'}` });
             return;
           }
 
-          appendMessage(
-            `<div class="bot"><b>Bot:</b> ${data.answer}</div><div class="meta">source: ${data.source}${data.matchedQuestion ? ` | matched: ${data.matchedQuestion}` : ''}</div>`
-          );
+          appendMessage({
+            speaker: 'Bot',
+            text: data.answer,
+            meta: `source: ${data.source}${data.matchedQuestion ? ` | matched: ${data.matchedQuestion}` : ''}`,
+          });
         } catch (_error) {
-          appendMessage('<div class="bot"><b>Bot:</b> Network error</div>');
+          appendMessage({ speaker: 'Bot', text: 'Network error' });
         }
       });
     </script>
