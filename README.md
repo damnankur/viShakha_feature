@@ -58,6 +58,12 @@ Response includes:
 - `type`: `golden` or `rag`
 - Required header: `x-admin-api-key: <ADMIN_API_KEY>`
 
+### Rebuild RAG index from faq.md (admin)
+`POST /api/chat/admin/rebuild-rag`
+
+- Replaces all documents in `rag_knowledge` with entries parsed from `faq.md`
+- Required header: `x-admin-api-key: <ADMIN_API_KEY>`
+
 ## Data Collections
 - `golden_answers`
 - `rag_knowledge`

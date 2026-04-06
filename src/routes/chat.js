@@ -2,6 +2,8 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { getPrioritizedAnswer, normalizeText } = require('../services/retrievalService');
 const { connectToMongo } = require('../db/mongo');
+const { textToEmbedding } = require('../services/embeddingService');
+const { rebuildRagKnowledgeFromFaq } = require('../services/vectorService');
 
 const router = express.Router();
 const chatLimiter = rateLimit({
@@ -69,8 +71,29 @@ router.post('/admin/knowledge', requireAdminKey, async (req, res, next) => {
       createdAt: new Date(),
     };
 
+    if (type === 'rag') {
+      doc.embedding = textToEmbedding(`${question} ${answer}`);
+      doc.type = 'rag';
+      doc.isActive = true;
+      doc.updatedAt = new Date();
+    }
+
     const result = await db.collection(targetCollection).insertOne(doc);
     return res.status(201).json({ id: result.insertedId, type, question, answer });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/admin/rebuild-rag', requireAdminKey, async (_req, res, next) => {
+  try {
+    const db = await connectToMongo();
+    const { insertedCount } = await rebuildRagKnowledgeFromFaq(db);
+
+    return res.status(200).json({
+      message: 'RAG knowledge rebuilt from faq.md',
+      insertedCount,
+    });
   } catch (error) {
     return next(error);
   }

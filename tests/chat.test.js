@@ -17,6 +17,15 @@ function createMockDb({ golden = [], rag = [] } = {}) {
         return {
           find: () => ({ toArray: async () => rag }),
           insertOne: async (doc) => ({ insertedId: `${rag.push(doc)}` }),
+          insertMany: async (docs) => {
+            rag.push(...docs);
+            return { insertedCount: docs.length };
+          },
+          deleteMany: async () => {
+            const deletedCount = rag.length;
+            rag.length = 0;
+            return { deletedCount };
+          },
         };
       }
       if (name === 'conversations') {
@@ -92,5 +101,21 @@ describe('admin knowledge auth', () => {
     });
 
     expect(response.status).toBe(401);
+  });
+
+  test('rejects unauthorized rag rebuild', async () => {
+    const response = await request(app).post('/api/chat/admin/rebuild-rag');
+
+    expect(response.status).toBe(401);
+  });
+
+  test('rebuilds rag knowledge from faq.md with valid admin key', async () => {
+    const response = await request(app)
+      .post('/api/chat/admin/rebuild-rag')
+      .set('x-admin-api-key', 'test-admin-key');
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('RAG knowledge rebuilt from faq.md');
+    expect(response.body.insertedCount).toBeGreaterThan(0);
   });
 });

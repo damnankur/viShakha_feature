@@ -1,18 +1,7 @@
 const { connectToMongo } = require('../db/mongo');
 const { generateMockAIResponse } = require('./aiService');
-
-function normalizeText(input) {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function legacyNormalizeText(input) {
-  return input.trim().toLowerCase();
-}
+const { normalizeText, legacyNormalizeText } = require('./retrievalServiceHelpers');
+const { findBestVectorRagMatch } = require('./vectorService');
 
 function overlapScore(question, candidateQuestion) {
   const qTokens = new Set(normalizeText(question).split(/\s+/).filter(Boolean));
@@ -25,29 +14,6 @@ function overlapScore(question, candidateQuestion) {
   }
 
   return overlap / Math.max(qTokens.size, cTokens.size);
-}
-
-async function findBestRagMatch(db, question, threshold = 0.3) {
-  const docs = await db.collection('rag_knowledge').find({}).toArray();
-
-  let best = { doc: null, score: -1 };
-  for (const doc of docs) {
-    const score = overlapScore(question, doc.question || '');
-    if (score > best.score) {
-      best = { doc, score };
-    }
-  }
-
-  if (!best.doc || best.score < threshold) {
-    return null;
-  }
-
-  return {
-    source: 'rag',
-    answer: best.doc.answer,
-    confidence: best.score,
-    matchedQuestion: best.doc.question,
-  };
 }
 
 async function getPrioritizedAnswer(question) {
@@ -83,7 +49,7 @@ async function getPrioritizedAnswer(question) {
     };
   }
 
-  const ragMatch = await findBestRagMatch(db, question);
+  const ragMatch = await findBestVectorRagMatch(db, question);
   if (ragMatch) {
     return ragMatch;
   }

@@ -1,7 +1,7 @@
 async function generateMockAIResponse(question) {
   return {
     source: 'ai',
-    answer: `Mock AI response: I could not find this in Golden DB or RAG DB for "${question}".`,
+    answer: `Add api for LLM based answers".`,
     confidence: 0.3,
   };
 }

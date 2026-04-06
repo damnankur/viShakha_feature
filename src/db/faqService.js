@@ -1,5 +1,6 @@
 const { connectToMongo } = require('../db/mongo');
-const { normalizeText } = require('./retrievalService');
+const { normalizeText } = require('../services/retrievalServiceHelpers');
+const { textToEmbedding } = require('../services/embeddingService');
 
 /**
  * FAQ Service for managing knowledge base
@@ -24,6 +25,10 @@ async function addFAQEntry(type, question, answer, metadata = {}) {
     isActive: true,
     version: 1,
   };
+
+  if (type === 'rag') {
+    doc.embedding = textToEmbedding(`${doc.question} ${doc.answer} ${doc.remarks || ''}`);
+  }
 
   const result = await collection.insertOne(doc);
   return {

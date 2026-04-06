@@ -1,4 +1,8 @@
+const path = require('path');
 const { MongoClient } = require('mongodb');
+
+// Ensure env vars are available when DB scripts are run directly.
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 let client;
 let db;

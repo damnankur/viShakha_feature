@@ -1,4 +1,4 @@
-const { connectToMongo } = require('./mongo');
+const { connectToMongo, closeMongo } = require('./mongo');
 
 /**
  * Initialize FAQ collections with schema validation
@@ -76,7 +76,6 @@ async function initializeFAQDatabase() {
               priority: {
                 bsonType: 'int',
                 description: 'Priority score for ranking (higher = more important)',
-                default: 1,
               },
               createdAt: {
                 bsonType: 'date',
@@ -88,12 +87,10 @@ async function initializeFAQDatabase() {
               },
               isActive: {
                 bsonType: 'bool',
-                default: true,
                 description: 'Whether this FAQ entry is active',
               },
               version: {
                 bsonType: 'int',
-                default: 1,
                 description: 'Version number for tracking updates',
               },
             },
@@ -183,7 +180,6 @@ async function initializeFAQDatabase() {
               },
               isActive: {
                 bsonType: 'bool',
-                default: true,
               },
             },
           },
@@ -265,7 +261,9 @@ async function initializeFAQDatabase() {
     console.log('\n✅ FAQ database initialization complete!');
   } catch (error) {
     console.error('❌ Error initializing FAQ database:', error);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    await closeMongo();
   }
 }
 
